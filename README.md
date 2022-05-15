@@ -33,3 +33,5 @@ To run, install all the dependencies from `requirements.txt`. You can use the fo
 pip install -r requirements.txt
 py scr
 ```
+
+![This is an image](img/sol_2.png)
