@@ -41,4 +41,4 @@ py scr
 ```
 
 ## Solution Example
-![This is an image](img/sol_2.png)
+![This is an image](img/all.png)
