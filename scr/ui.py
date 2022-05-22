@@ -1,7 +1,8 @@
 import pygame
 from pygame.locals import *
-from pathFinder import Dijkstra
+from pathFinder import Dijkstra, Heuristic, Astar
 from os.path import join
+from cmath import inf
 
 class App:
     def __init__(self, size, fps, table_w, table_h, tile, pos) -> None:
@@ -10,12 +11,14 @@ class App:
         self.show_data = False
         self.resolve = False
         self.path = []
+        self.method = 'Dij'
+        self.save_ct = 0
 
         pygame.init()
         self.screen = pygame.display.set_mode(self.size)
         self.clock = pygame.time.Clock()
         font = pygame.font.match_font('consolas')
-        self.font = pygame.font.Font(font, 30)
+        self.font = pygame.font.Font(font, 20)
 
         self.state = 0
         self.start_pos = None
@@ -25,12 +28,34 @@ class App:
         self.table_surf = pygame.Surface((table_w*tile, table_h*tile))
         self.table_rect = self.table_surf.get_rect(topleft=pos)
 
-        self.pathfider = Dijkstra(self.table)
+        self.chose_method()
 
         self.table_surf_update()
     
+    def chose_method(self):
+        match self.method:
+            case 'Dij':
+                self.pathfider = Dijkstra(self.table, self.end_pos)
+            case 'Heu':
+                self.pathfider = Heuristic(self.table, self.end_pos)
+            case 'As':
+                self.pathfider = Astar(self.table, self.end_pos)
+
     def add_data(self, x, y, center):
-        text = f'{self.pathfider.graph[y][x].path_sum}'
+        match self.method:
+            case 'Dij':
+                text = f'{self.pathfider.graph[y][x].path_sum}'
+            case 'Heu':
+                d = self.pathfider.graph[y][x].distance
+                if d != inf:
+                    d = round(d)
+                text = f'{ d }'
+            case 'As':
+                d = self.pathfider.graph[y][x].distance + self.pathfider.graph[y][x].path_sum
+                if d != inf:
+                    d = round(d)
+                text = f'{ d }'
+    
         surf_text = self.font.render(text, True, (100,100,100))
         rect_text = surf_text.get_rect(center=center)
         self.table_surf.blit(surf_text, rect_text)
@@ -76,6 +101,13 @@ class App:
         if 0 <= px < len(self.table[0]) and 0 <= py < len(self.table):
             return px, py
     
+    def save(self):
+        name = f'sol_{self.save_ct}_{self.method}.png'
+        path = join('img', name)
+        pygame.image.save(self.table_surf, path)
+        self.save_ct += 1
+        print(f'Image saved: {name}')
+
     def mouse_events(self) -> None:
         press = pygame.mouse.get_pressed()
         if press[0]:
@@ -94,7 +126,7 @@ class App:
                     self.restart()
     
     def restart(self):
-        self.pathfider = Dijkstra(self.table)
+        self.chose_method()
         if self.start_pos:
             self.pathfider.set_start(self.start_pos)
         self.path = []
@@ -114,12 +146,24 @@ class App:
             elif event.key in (K_s,):
                 self.pathfider.step()
             elif event.key in (K_SPACE,):
+                self.restart()
                 self.resolve = True
             elif event.key in (K_r,):
                 self.restart()
             elif event.key in (K_f,):
-                path = join('img', 'sol.png')
-                pygame.image.save(self.table_surf, path)
+                self.save()
+            elif event.key in (K_F1,):
+                self.method = 'Dij'
+                self.restart()
+                print('Method: Dijkstra')
+            elif event.key in (K_F2,):
+                self.method = 'Heu'
+                self.restart()
+                print('Method: Heuristic')
+            elif event.key in (K_F3,):
+                self.method = 'As'
+                self.restart()
+                print('Method: As')
     
     def write(self, text:str, center:tuple[int, int]) -> None:
         surf = self.font.render(text, True, (255,255,255), (0,0,0))
@@ -128,12 +172,17 @@ class App:
 
     def run(self) -> None:
         run = True
+        n = 0
         while run:
             self.screen.fill((50,50,50))
             if self.resolve:
                 self.resolve = self.pathfider.step()
+                n += 1
             elif self.end_pos:
                 self.path = self.pathfider.get_path(self.end_pos)
+                if n:
+                    print(f'Steps to Find a Solution: {n}\nSolution Lenght Path: {len(self.path)}\n')
+                n = 0
             self.table_surf_update()
             self.screen.blit(self.table_surf, self.table_rect)
             self.write(f'fps = {round(self.clock.get_fps())}', (100,50))
@@ -148,7 +197,7 @@ class App:
             
 
 def main() -> None:
-    app = App( size=(1000,900), fps=60, table_w=16, table_h=13, tile=60, pos=(20,70) )
+    app = App( size=(1000,1000), fps=60, table_w=30, table_h=30, tile=30, pos=(20,70) )
     #app = App( (1000,900), 60, 10, 10 , 60, (20,70) )
     app.run()
 

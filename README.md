@@ -1,5 +1,5 @@
 # Path Finding algorithm
-This is a solution using Dijkstra’s shortest path algorithm.
+This is a solution using Dijkstra’s shortest path algorithm, Greedy Best First Search and A* algorithm.
 
 You can create obstacles on the table and find the shortest path between two points.
 
@@ -13,6 +13,12 @@ Mouse Left Click to interact with the table.
 '2'  to select the starting point.
 
 '3'  to select the end point.
+
+'F1' to use the Dijkstra’s shortest path algorithm.
+
+'F2' to use the Greedy Best First Search.
+
+'F3' to use the A* algorithm.
 
 's' to take a single step in the path finding.
 
